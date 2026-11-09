@@ -1,121 +1,125 @@
-import sys
+"""TIC TAC TOE - 2 Player Game.
+
+Plain Python, no dependencies. Player 1 claims slots with #, Player 2 with @.
+Slots are numbered 1-9, left to right, top to bottom.
+"""
+
 import os
+import sys
 
-print("TIC TAC TOE - 2PlayerGame")
+P1_MARK = "#"
+P2_MARK = "@"
+MARKS = (P1_MARK, P2_MARK)
 
-p1_name = input("Player 1 Name: ")
-p2_name = input("Player 2 Name: ")
+WIN_GROUPS = (
+    (0, 1, 2), (3, 4, 5), (6, 7, 8),   # rows
+    (0, 3, 6), (1, 4, 7), (2, 5, 8),   # columns
+    (0, 4, 8), (2, 4, 6),              # diagonals
+)
 
-print("P1: " + p1_name + "  " + "P2: " + p2_name)
 
-tblV = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+def clear_screen():
+    """Clear the terminal on Windows and everything else."""
+    os.system("cls" if os.name == "nt" else "clear")
 
-P1WINS = 0
-P2WINS = 0
-boxFcount = 0
 
-IsP1done = False
-IsP2done = False
-
-def clearn():
-    os.system('cls')
-
-def showTable():
+def show_table(board, p1_name, p2_name, p1_wins, p2_wins):
     print("-----------------------------------------")
-    print(f"SCORES: P1:{P1WINS} - P2:{P2WINS}")
+    print(f"SCORES: P1:{p1_wins} - P2:{p2_wins}")
     print("-----------------------------------------")
-    print(f"[ {tblV[0]} ] [ {tblV[1]} ] [ {tblV[2]} ]")
-    print(f"[ {tblV[3]} ] [ {tblV[4]} ] [ {tblV[5]} ]")
-    print(f"[ {tblV[6]} ] [ {tblV[7]} ] [ {tblV[8]} ]")
-
-def askP1():
-    global IsP1done
-    global IsP2done
-    while not IsP1done:
-        showTable() 
-        p1_choice = int(input(f"P1 {p1_name} : choose your slot : "))
-   
-        if p1_choice in tblV:
-            tblV[p1_choice-1] = "#" 
-            IsP1done = True
-            IsP2done = False
-        else:
-            print("Please choose number from the list")
-            #os.system('cls')
+    print(f"[ {board[0]} ] [ {board[1]} ] [ {board[2]} ]")
+    print(f"[ {board[3]} ] [ {board[4]} ] [ {board[5]} ]")
+    print(f"[ {board[6]} ] [ {board[7]} ] [ {board[8]} ]")
+    print(f"{p1_name}={P1_MARK}   {p2_name}={P2_MARK}")
 
 
-def askP2():
-    global IsP1done
-    global IsP2done
-    while not IsP2done:
-        showTable() 
-        p2_choice = int(input(f"P2{p2_name} : choose your slot : "))
-   
-        if p2_choice in tblV:
-            tblV[p2_choice-1] = "@" 
-            IsP2done = True
-            IsP1done = False
-        else:
-            print("Please choose number from the list")
-            #os.system('cls')
-            
-def win_check():
-    global boxFcount
-    global P1WINS
-    global P2WINS
-    win_groups = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6), ]
-    if any(tblV[i] == tblV[j] == tblV[k] == "#" for i, j, k in win_groups):
-        #os.system('cls')
-        showTable()
-        print(f"Player 1 WON!!! Congrats {p1_name} !!!")
-        P1WINS += 1
-        sys.exit()
-    elif any(tblV[i] == tblV[j] == tblV[k] == "@" for i, j, k in win_groups):
-        #os.system('cls')
-        showTable()
-        print(f"Player 2 WON!!! Congrats {p2_name} !!!") 
-        P2WINS += 1
-        sys.exit()
-    else:
-        for i in range(9):
-            if tblV[i] == '#' or tblV[i] == '@':
-                print(f"{i} down")
-                
-                boxFcount = boxFcount + 1
-              
-                
-                if boxFcount == 9 or boxFcount > 9:
-                    #os.system('cls')
-                    print("DRAW")
-                    sys.exit()
-                else:
-                   pass
-            else:
-                boxFcount = 0
-                     
-           
-def play():
-    if  not IsP1done:
-        #os.system('cls')
-        askP1()
-        win_check()
-    elif not IsP2done:
-        #os.system('cls')
-        askP2()
-        win_check()
-    else:
-        print("SOMETHING WENT WRONG")
-        sys.exit()
-
-while True:
-    IsP1done = False
-    IsP2done = False
-    tblV = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+def ask_move(board, player_name, marker):
+    """Ask until the player gives a slot number that is still free."""
     while True:
-        play()
-        if IsP1done and IsP2done:  
-            IsP1done = False
-            IsP2done = False
-    PorQ = input("Play (P) or QUIT (Q): ")
-    if PorQ.lower() == "q":
-        break
+        raw = input(f"{player_name} ({marker}) choose your slot: ").strip()
+
+        if not raw.isdigit():
+            print("Numbers only, 1 to 9. Try again.")
+            continue
+
+        choice = int(raw)
+        if not 1 <= choice <= 9:
+            print("That slot does not exist. Pick 1 to 9.")
+            continue
+
+        if board[choice - 1] in MARKS:
+            print(f"Slot {choice} is already taken. Pick a free one.")
+            continue
+
+        board[choice - 1] = marker
+        return
+
+
+def has_winner(board, marker):
+    return any(board[i] == board[j] == board[k] == marker for i, j, k in WIN_GROUPS)
+
+
+def board_full(board):
+    return all(cell in MARKS for cell in board)
+
+
+def play_round(board, p1_name, p2_name, p1_wins, p2_wins):
+    """Play one round. Returns '#', '@' or 'draw'."""
+    while True:
+        clear_screen()
+        show_table(board, p1_name, p2_name, p1_wins, p2_wins)
+
+        ask_move(board, p1_name, P1_MARK)
+        if has_winner(board, P1_MARK):
+            return P1_MARK
+        if board_full(board):
+            return "draw"
+
+        clear_screen()
+        show_table(board, p1_name, p2_name, p1_wins, p2_wins)
+
+        ask_move(board, p2_name, P2_MARK)
+        if has_winner(board, P2_MARK):
+            return P2_MARK
+        if board_full(board):
+            return "draw"
+
+
+def main():
+    print("TIC TAC TOE - 2 Player Game")
+
+    p1_name = input("Player 1 Name: ").strip() or "Player 1"
+    p2_name = input("Player 2 Name: ").strip() or "Player 2"
+
+    p1_wins = 0
+    p2_wins = 0
+
+    while True:
+        board = [str(n) for n in range(1, 10)]
+        result = play_round(board, p1_name, p2_name, p1_wins, p2_wins)
+
+        if result == P1_MARK:
+            p1_wins += 1
+            headline = f"Player 1 WON! Congrats {p1_name}!"
+        elif result == P2_MARK:
+            p2_wins += 1
+            headline = f"Player 2 WON! Congrats {p2_name}!"
+        else:
+            headline = "DRAW. Nobody wins, everybody survives."
+
+        clear_screen()
+        show_table(board, p1_name, p2_name, p1_wins, p2_wins)
+        print(headline)
+
+        if input("Play again (P) or quit (Q): ").strip().lower() == "q":
+            print(f"Final score -> {p1_name}: {p1_wins}   {p2_name}: {p2_wins}")
+            print("Thanks for playing!")
+            return
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (KeyboardInterrupt, EOFError):
+        print("\nGame closed.")
+        sys.exit(0)
